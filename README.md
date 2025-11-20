@@ -1,313 +1,206 @@
 # nexa_ai_flutter
 
-A comprehensive Flutter plugin for the Nexa AI SDK, enabling on-device AI inference for Android applications. Run Large Language Models (LLMs), Vision-Language Models (VLMs), Embeddings, Speech Recognition (ASR), Reranking, and Computer Vision models directly on Android devices with support for NPU, GPU, and CPU inference.
+Flutter plugin for the Nexa AI SDK. Run AI models directly on Android devices - LLMs, vision models, embeddings, speech recognition, and more. Works with Qualcomm NPU, GPU, and CPU.
 
-## Features
+## What's This About?
 
-- **6 Model Types Supported**:
-  - 🤖 **LLM (Large Language Models)**: Text generation and chat with streaming support
-  - 🖼️ **VLM (Vision-Language Models)**: Multimodal AI with image and audio understanding
-  - 🔢 **Embeddings**: Generate vector embeddings for semantic search and RAG
-  - 🎤 **ASR (Automatic Speech Recognition)**: Transcribe audio to text
-  - 📊 **Reranker**: Improve search relevance by reranking documents
-  - 👁️ **Computer Vision**: OCR, object detection, and image classification
+This plugin lets you run AI models on Android phones without needing internet or cloud services. It's built on top of Nexa AI's Android SDK and supports hardware acceleration through Qualcomm's NPU (Neural Processing Unit).
 
-- **Built-in Model Downloader**: Download and manage official Nexa AI models with progress tracking
-- **Hardware Acceleration**: NPU (Qualcomm Hexagon), GPU (Adreno), and CPU (ARM64-v8a) support
-- **Real-time Streaming**: Token-by-token streaming for LLM and VLM models
-- **Builder Pattern API**: Clean, fluent API design matching the native SDK
-- **Storage Management**: Track model storage, delete models, and manage downloads
-- **Comprehensive Error Handling**: Detailed error messages and proper exception handling
+**Supported Models:**
+- Large Language Models (text generation, chat)
+- Vision-Language Models (image understanding)
+- Text Embeddings (semantic search, RAG)
+- Speech Recognition
+- Document Reranking
+- Computer Vision (OCR)
 
-## Installation
+## Quick Start
 
-Add this to your package's `pubspec.yaml` file:
+Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
   nexa_ai_flutter: ^0.0.1
 ```
 
-Then run:
-```bash
-flutter pub get
-```
-
-## Platform Requirements
-
-### Android
-- **Min SDK**: 27 (Android 8.1)
-- **Compile SDK**: 36
-- **Kotlin**: 2.1.0+
-- **Gradle**: 8.9.1+
-
-### Supported Devices
-- **NPU**: Qualcomm Snapdragon 8 Gen 4
-- **GPU**: Qualcomm Adreno GPU
-- **CPU**: ARM64-v8a
-
-## Getting Started
-
-### 1. Initialize the SDK
+Initialize in your app:
 
 ```dart
 import 'package:nexa_ai_flutter/nexa_ai_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize the Nexa SDK
   await NexaSdk.getInstance().init();
-
   runApp(MyApp());
 }
 ```
 
-## Model Management
+## Requirements
 
-The plugin includes a built-in model downloader for easy access to official Nexa AI models.
+**Android Only** (for now)
+- Min SDK 27 (Android 8.1+)
+- ARM64 device
+- Kotlin 2.1.0+
 
-### Downloading Pre-trained Models
+**Best Performance:**
+- Snapdragon 8 Gen 3 or 8 Gen 4 (NPU support)
+- Other Snapdragon 8 series work fine with GPU
+- Any ARM64 device will work with CPU (slower)
 
-#### 1. Get Available Models
+## Downloading Models
+
+The plugin includes 8 ready-to-use models. Here's how to get them:
+
+### See what's available
 
 ```dart
-// Get all available models
 final models = await ModelDownloader.getAvailableModels();
 
 for (var model in models) {
   print('${model.displayName} - ${model.sizeGb} GB');
   print('Type: ${model.type}');
-  print('Features: ${model.features.join(", ")}');
 }
-
-// Filter by type
-final vlmModels = await ModelDownloader.getModelsByType('multimodal');
 ```
 
-#### 2. Download a Model with Progress
+### Download with progress
 
 ```dart
-ModelDownloader downloader = ModelDownloader();
-
-downloader.downloadModel('OmniNeural-4B').listen(
+ModelDownloader().downloadModel('SmolVLM-256M-Instruct-f16').listen(
   (progress) {
     if (progress.status == DownloadStatus.downloading) {
-      print('Downloading: ${progress.percentage}%');
-      print('Speed: ${progress.speedMBps.toStringAsFixed(2)} MB/s');
-      print('${progress.downloadedBytes} / ${progress.totalBytes} bytes');
+      print('${progress.percentage}% at ${progress.speedMBps.toStringAsFixed(1)} MB/s');
     } else if (progress.status == DownloadStatus.completed) {
-      print('Download completed!');
-    } else if (progress.status == DownloadStatus.failed) {
-      print('Download failed');
-    } else if (progress.status == DownloadStatus.cancelled) {
-      print('Download cancelled');
+      print('Done!');
     }
-  },
-  onError: (error) {
-    print('Error: $error');
   },
 );
 ```
 
-#### 3. Cancel Download
+### Cancel if needed
 
 ```dart
-// Cancel an ongoing download
-await ModelDownloader.cancelDownload('OmniNeural-4B');
+await ModelDownloader.cancelDownload('model-id');
 ```
 
-#### 4. Check if Model is Downloaded
+### Check device compatibility
 
 ```dart
-bool isDownloaded = await ModelDownloader.isModelDownloaded('OmniNeural-4B');
+final compat = await ModelDownloader.checkModelCompatibility('SmolVLM-256M-Instruct-f16');
 
-if (isDownloaded) {
-  String? path = await ModelDownloader.getModelPath('OmniNeural-4B');
-  print('Model available at: $path');
+if (compat.isCompatible) {
+  print('This model will run ${compat.speedText} on your device');
+  print(compat.recommendation);
 }
 ```
 
-#### 5. Use Downloaded Model
+### Available models
+
+| Model | Size | Type | Notes |
+|-------|------|------|-------|
+| SmolVLM-256M-Instruct-f16 | 0.48 GB | Vision+Chat | Good for testing, works on most devices |
+| LFM2-1.2B-GGUF | 0.75 GB | Chat | Fast chat model |
+| OmniNeural-4B | 4 GB | Vision+Chat | Better quality, needs good device |
+| LFM2-1.2B-npu | 0.75 GB | Chat | NPU optimized |
+| embeddinggemma-300m-npu | 0.25 GB | Embeddings | For semantic search |
+| parakeet-tdt-0.6b-v3-npu | 0.6 GB | Speech-to-text | Audio transcription |
+| jina-v2-rerank-npu | 1.0 GB | Reranking | Search improvement |
+| paddleocr-npu | 0.25 GB | OCR | Text recognition |
+
+Models are saved to `/data/data/{your_package}/files/models/`
+
+## Using the Models
+
+### Chat with LLM
 
 ```dart
-// Get the model path
-String? modelPath = await ModelDownloader.getModelPath('OmniNeural-4B');
-
-if (modelPath != null) {
-  // Create VLM with the downloaded model
-  final vlm = await VlmWrapper.create(
-    VlmCreateInput(
-      modelName: 'omni-neural',
-      modelPath: modelPath,
-      config: ModelConfig(maxTokens: 2048),
-      pluginId: 'npu',
-    ),
-  );
-
-  // Use the model...
-  // Remember to call vlm.destroy() when done
-}
-```
-
-#### 6. Manage Storage
-
-```dart
-// Get storage information
-final storage = await ModelDownloader.getStorageInfo();
-print('Total: ${storage.totalSpaceGB.toStringAsFixed(2)} GB');
-print('Free: ${storage.freeSpaceGB.toStringAsFixed(2)} GB');
-print('Used by models: ${storage.usedByModelsGB.toStringAsFixed(2)} GB');
-print('Downloaded models: ${storage.downloadedModels.join(", ")}');
-
-// Delete a model to free space
-await ModelDownloader.deleteModel('OmniNeural-4B');
-
-// Get list of all downloaded models
-List<String> downloaded = await ModelDownloader.getDownloadedModels();
-
-// Get models directory path
-String modelsDir = await ModelDownloader.getModelsDirectory();
-
-// Clean up incomplete downloads
-await ModelDownloader.cleanupIncompleteDownloads();
-```
-
-### Available Pre-configured Models
-
-The plugin includes 8 pre-configured models from Nexa AI:
-
-| Model ID | Name | Type | Size | Features |
-|----------|------|------|------|----------|
-| OmniNeural-4B | OmniNeural-4B | VLM | 4 GB | Chat, Vision |
-| paddleocr-npu | PaddleOCR NPU | CV | 0.25 GB | OCR |
-| parakeet-tdt-0.6b-v3-npu | Parakeet ASR | ASR | 0.6 GB | Speech-to-Text |
-| embeddinggemma-300m-npu | Embedding Gemma | Embedder | 0.25 GB | Embeddings |
-| jina-v2-rerank-npu | Jina Reranker | Reranker | 1.0 GB | Reranking |
-| LFM2-1.2B-npu | LFM2 Chat | LLM | 0.75 GB | Chat |
-| SmolVLM-256M-Instruct-f16 | SmolVLM | VLM | 0.48 GB | Chat, Vision (GGUF) |
-| LFM2-1.2B-GGUF-GGUF | LFM2 GGUF | LLM | 0.75 GB | Chat (GGUF) |
-
-**Note:** Models are downloaded to `/data/data/{your_package}/files/models/` on Android.
-
-### 2. LLM - Large Language Models
-
-```dart
-// Create LLM wrapper
+// Load the model
 final llm = await LlmWrapper.create(
   LlmCreateInput(
     modelPath: '/path/to/model.gguf',
-    config: ModelConfig(
-      nCtx: 4096,
-      maxTokens: 2048,
-    ),
-    pluginId: 'cpu_gpu', // or 'npu' for NPU inference
+    config: ModelConfig(nCtx: 4096, maxTokens: 2048),
+    pluginId: 'cpu_gpu', // or 'npu' if your device supports it
   ),
 );
 
-// Apply chat template
+// Have a conversation
 final messages = [
-  ChatMessage('user', 'What is AI?'),
+  ChatMessage('user', 'What is machine learning?'),
 ];
+
 final template = await llm.applyChatTemplate(messages);
 
-// Generate with streaming
-llm.generateStream(
-  template.formattedText,
-  GenerationConfig(maxTokens: 2048),
-).listen((result) {
-  if (result is LlmStreamToken) {
-    print(result.text); // Token-by-token output
-  } else if (result is LlmStreamCompleted) {
-    print('TTFT: ${result.profile.ttftMs} ms');
-    print('Speed: ${result.profile.decodingSpeed} t/s');
-  } else if (result is LlmStreamError) {
-    print('Error: ${result.message}');
-  }
-});
+llm.generateStream(template.formattedText, GenerationConfig(maxTokens: 512)).listen(
+  (result) {
+    if (result is LlmStreamToken) {
+      print(result.text); // Prints token by token
+    } else if (result is LlmStreamCompleted) {
+      print('\nDone! Speed: ${result.profile.decodingSpeed.toStringAsFixed(1)} tokens/sec');
+    }
+  },
+);
 
-// Clean up
+// Clean up when done
 await llm.destroy();
 ```
 
-### 3. VLM - Vision-Language Models
+### Vision + Language
 
 ```dart
-// Create VLM wrapper
 final vlm = await VlmWrapper.create(
   VlmCreateInput(
-    modelName: 'omni-neural', // For NPU models
     modelPath: '/path/to/model',
-    config: ModelConfig(
-      maxTokens: 2048,
-      enableThinking: false,
-    ),
-    pluginId: 'npu',
+    config: ModelConfig(maxTokens: 2048),
+    pluginId: 'cpu_gpu',
   ),
 );
 
-// Create multimodal message
+// Ask about an image
 final message = VlmChatMessage('user', [
-  VlmContent('image', '/path/to/image.jpg'),
-  VlmContent('text', 'What is in this image?'),
+  VlmContent('image', '/path/to/photo.jpg'),
+  VlmContent('text', 'What do you see?'),
 ]);
 
-// Apply chat template and inject media paths
 final template = await vlm.applyChatTemplate([message]);
-final config = vlm.injectMediaPathsToConfig(
-  [message],
-  GenerationConfig(maxTokens: 2048),
-);
+final config = vlm.injectMediaPathsToConfig([message], GenerationConfig(maxTokens: 512));
 
-// Generate response
 vlm.generateStream(template.formattedText, config).listen((result) {
-  // Handle streaming results
+  // Same as LLM streaming
 });
 
 await vlm.destroy();
 ```
 
-### 4. Embeddings
+### Text Embeddings
 
 ```dart
-// Create embedder
 final embedder = await EmbedderWrapper.create(
   EmbedderCreateInput(
-    modelName: 'embed-gemma', // For NPU models
     modelPath: '/path/to/embedder',
     config: ModelConfig(),
-    pluginId: 'npu',
+    pluginId: 'cpu_gpu',
   ),
 );
 
-// Generate embeddings
-final texts = ['Hello world', 'AI is awesome'];
 final embeddings = await embedder.embed(
-  texts,
+  ['Hello world', 'Machine learning is cool'],
   EmbeddingConfig(normalize: true),
 );
 
-// Calculate dimensions
-final dimension = embeddings.length ~/ texts.length;
-print('Embedding dimension: $dimension');
-
+print('Got ${embeddings.length} values');
 await embedder.destroy();
 ```
 
-### 5. ASR - Automatic Speech Recognition
+### Speech Recognition
 
 ```dart
-// Create ASR wrapper
 final asr = await AsrWrapper.create(
   AsrCreateInput(
-    modelName: 'parakeet', // For NPU models
     modelPath: '/path/to/asr',
     config: ModelConfig(),
-    pluginId: 'npu',
+    pluginId: 'cpu_gpu',
   ),
 );
 
-// Transcribe audio
 final result = await asr.transcribe(
   AsrTranscribeInput(
     audioPath: '/path/to/audio.wav',
@@ -315,50 +208,42 @@ final result = await asr.transcribe(
   ),
 );
 
-print('Transcription: ${result.result.transcript}');
-
+print('Transcript: ${result.result.transcript}');
 await asr.destroy();
 ```
 
-### 6. Reranker
+### Document Reranking
 
 ```dart
-// Create reranker
 final reranker = await RerankerWrapper.create(
   RerankerCreateInput(
-    modelName: 'jina-rerank', // For NPU models
     modelPath: '/path/to/reranker',
     config: ModelConfig(),
-    pluginId: 'npu',
+    pluginId: 'cpu_gpu',
   ),
 );
 
-// Rerank documents
-final query = 'What is machine learning?';
-final documents = [
-  'ML is a subset of AI',
-  'Weather forecast for tomorrow',
-  'Deep learning tutorial',
-];
-
 final result = await reranker.rerank(
-  query,
-  documents,
+  'What is deep learning?',
+  [
+    'Neural networks are used in deep learning',
+    'The weather is nice today',
+    'Deep learning tutorial for beginners',
+  ],
   RerankConfig(topN: 3),
 );
 
-// Display results sorted by relevance
+// Results are sorted by relevance score
 for (var i = 0; i < result.scores.length; i++) {
-  print('Score: ${result.scores[i].toStringAsFixed(4)} - ${documents[i]}');
+  print('${result.scores[i].toStringAsFixed(3)}: ${result.documents[i]}');
 }
 
 await reranker.destroy();
 ```
 
-### 7. Computer Vision
+### OCR / Computer Vision
 
 ```dart
-// Create CV wrapper
 final cv = await CvWrapper.create(
   CVCreateInput(
     modelName: 'paddleocr',
@@ -366,124 +251,108 @@ final cv = await CvWrapper.create(
       capabilities: CVCapability.ocr,
       detModelPath: '/path/to/detection',
       recModelPath: '/path/to/recognition',
-      charDictPath: '/path/to/dictionary',
+      charDictPath: '/path/to/dict',
     ),
     pluginId: 'npu',
   ),
 );
 
-// Perform OCR
 final results = await cv.infer('/path/to/image.jpg');
 
 for (var result in results) {
-  print('Text: ${result.text}');
+  print('Found text: ${result.text}');
   print('Confidence: ${result.confidence}');
-  if (result.boundingBox != null) {
-    print('Position: (${result.boundingBox!.x}, ${result.boundingBox!.y})');
-  }
 }
 
 await cv.destroy();
 ```
 
-## Model Name Mapping (NPU Models)
+## Model Name Reference (NPU Models)
 
-For NPU models, use these model names and plugin IDs:
+If you're using NPU-optimized models, you need to specify the model name:
 
-| Model Name | Plugin ID | HuggingFace Repository |
-|------------|-----------|------------------------|
-| omni-neural | npu | NexaAI/OmniNeural-4B-mobile |
-| embed-gemma | npu | NexaAI/embeddinggemma-300m-npu-mobile |
-| parakeet | npu | NexaAI/parakeet-tdt-0.6b-v3-npu-mobile |
-| liquid-v2 | npu | NexaAI/LFM2-1.2B-npu-mobile |
-| jina-rerank | npu | NexaAI/jina-v2-rerank-npu-mobile |
-| paddleocr | npu | NexaAI/paddleocr-npu-mobile |
+| Model | Name to Use | Plugin |
+|-------|-------------|--------|
+| LFM2-1.2B-npu | liquid-v2 | npu |
+| OmniNeural-4B | omni-neural | npu |
+| embeddinggemma-300m-npu | embed-gemma | npu |
+| parakeet-tdt-0.6b-v3-npu | parakeet | npu |
+| jina-v2-rerank-npu | jina-rerank | npu |
+| paddleocr-npu | paddleocr | npu |
 
-For GGUF format models, use `pluginId: "cpu_gpu"` and no model name is required.
+For GGUF models, just use the file path and `pluginId: 'cpu_gpu'`.
 
-## Advanced Usage
+## Tips
 
-### Generation Configuration
+**Choose the right hardware:**
+- Use `pluginId: 'npu'` on Snapdragon 8 Gen 3/4 for best performance
+- Use `pluginId: 'cpu_gpu'` for everything else
+- Check compatibility first with `checkModelCompatibility()`
 
+**Memory management:**
+- Always call `.destroy()` when you're done with a model
+- Don't load multiple large models at once
+- Use streaming for LLM/VLM to show results faster
+
+**Generation settings:**
 ```dart
-final config = GenerationConfig(
-  maxTokens: 2048,
-  stopWords: ['<|end|>', '<|stop|>'],
+GenerationConfig(
+  maxTokens: 512,
   samplerConfig: SamplerConfig(
-    temperature: 0.7,
+    temperature: 0.7,  // Lower = more focused, Higher = more creative
     topK: 40,
     topP: 0.95,
-    repeatPenalty: 1.1,
   ),
-);
+)
 ```
 
-### Conversation Management
-
+**Managing conversations:**
 ```dart
-// LLM conversation
-final chatList = <ChatMessage>[];
-chatList.add(ChatMessage('user', 'Hello!'));
+List<ChatMessage> history = [];
 
-// Apply template and generate
-final template = await llm.applyChatTemplate(chatList);
-// ... generate response
+// Add messages to history
+history.add(ChatMessage('user', 'Hello'));
+history.add(ChatMessage('assistant', response));
+history.add(ChatMessage('user', 'Follow-up question'));
 
-// Add assistant response to history
-chatList.add(ChatMessage('assistant', responseText));
+// Apply template with full history
+final template = await llm.applyChatTemplate(history);
 
-// Continue conversation
-chatList.add(ChatMessage('user', 'Tell me more'));
-
-// Reset conversation
+// Reset if needed
 await llm.reset();
 ```
 
-### Stop Generation
+## Example App
 
-```dart
-// Stop streaming generation
-await llm.stopStream();
-// or
-await vlm.stopStream();
+Check the `/example` folder for a complete app that shows:
+- Model downloading with progress
+- Device compatibility detection
+- Model management (download/delete)
+- Interactive chat with streaming
+- Storage monitoring
+
+Run it with:
+```bash
+cd example
+flutter run
 ```
-
-## Error Handling
-
-```dart
-try {
-  final llm = await LlmWrapper.create(input);
-  // Use the model
-} catch (e) {
-  print('Failed to create model: $e');
-}
-```
-
-## Performance Tips
-
-1. **Choose the right hardware**: Use NPU for best performance on supported devices
-2. **Manage model lifecycle**: Always call `destroy()` when done
-3. **Stream for responsiveness**: Use streaming for better user experience
-4. **Batch embeddings**: Generate embeddings for multiple texts at once
-5. **Reuse models**: Keep models loaded if you need to use them multiple times
 
 ## Limitations
 
-- Currently supports Android only
-- NPU support requires compatible Qualcomm hardware
-- Model files must be downloaded separately and stored locally
-- File paths must be absolute paths accessible by the app
+- Android only right now
+- Models need to be downloaded first (they're big)
+- NPU only works on specific Qualcomm chips
+- File paths must be absolute and readable by your app
 
-## Example App
+## Getting Help
 
-Check out the `/example` folder for a complete demo app showing all features.
+- File bugs: https://github.com/bhanuka96/nexa_ai_flutter/issues
+- Nexa AI docs: https://docs.nexaai.com/
 
-## Support
+## Credits
 
-For issues and questions:
-- GitHub Issues: Report a bug or request a feature
-- Nexa AI Documentation: https://docs.nexaai.com/
+Built using Nexa AI Android SDK v0.0.10. Thanks to the Nexa AI team for the underlying SDK.
 
-## Acknowledgments
+## License
 
-Built on top of the Nexa AI Android SDK (v0.0.10). Special thanks to the Nexa AI team for their excellent work on the underlying SDK.
+MIT License - see LICENSE file
