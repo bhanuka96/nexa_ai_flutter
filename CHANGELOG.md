@@ -1,3 +1,8 @@
+## 0.0.4
+
+### Changes
+* Update model download URLs
+
 ## 0.0.3
 
 ### Bug Fixes
