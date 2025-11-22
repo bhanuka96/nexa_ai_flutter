@@ -1,6 +1,6 @@
 name: nexa_ai_flutter
 description: Comprehensive Flutter plugin for Nexa AI SDK - Run LLMs, VLMs, Embeddings, ASR, and CV models on-device with NPU/GPU/CPU support for Android
-version: 0.0.2
+version: 0.0.3
 homepage: https://github.com/bhanuka96/nexa_ai_flutter
 repository: https://github.com/bhanuka96/nexa_ai_flutter
 issue_tracker: https://github.com/bhanuka96/nexa_ai_flutter/issues

@@ -1,3 +1,8 @@
+## 0.0.3
+
+### Bug Fixes
+* Fix R8 obfuscation of Nexa SDK bean classes causing crash in release builds
+
 ## 0.0.2
 
 ### Bug Fixes

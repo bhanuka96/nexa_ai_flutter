@@ -16,6 +16,8 @@
 # Nexa AI SDK rules
 -keep class ai.nexa.** { *; }
 -keepclassmembers class ai.nexa.** { *; }
+-keep class com.nexa.sdk.** { *; }
+-keepclassmembers class com.nexa.sdk.** { *; }
 
 # Keep the plugin classes
 -keep class com.example.nexa_ai_flutter.** { *; }
