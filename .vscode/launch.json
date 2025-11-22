@@ -6,6 +6,13 @@
             "cwd": "example",
             "request": "launch",
             "type": "dart"
+        },
+         {
+            "name": "release",
+            "cwd": "example",
+            "request": "launch",
+            "type": "dart",
+            "args": ["--release"]
         }
     ]
 }
