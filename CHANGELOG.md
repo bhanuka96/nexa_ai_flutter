@@ -1,3 +1,9 @@
+## 0.0.2
+
+### Bug Fixes
+* Add ProGuard rules to fix R8 code shrinking issues in release builds
+* Update Nexa AI core SDK to 0.0.11
+
 ## 0.0.1
 
 ### Initial Release
